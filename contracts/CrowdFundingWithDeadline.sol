@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 contract CrowdFundingWithDeadLine {
@@ -23,7 +25,7 @@ contract CrowdFundingWithDeadLine {
         uint durationInMin,
         address beneficiaryAddress
     )
-    public {
+    {
         name = contractName;
         targetAmount = targetAmountEth * 1 ether;
         fundingDeadLine = currentTime() + durationInMin * 1 minutes;
@@ -32,6 +34,8 @@ contract CrowdFundingWithDeadLine {
     }
 
     function contribute() public payable inState(State.Ongoing){
+        require(beforeDeadLine(), "Funding is not yet open");
+
         amounts[msg.sender] += msg.value;
         totalCollected += msg.value;
 
@@ -40,7 +44,21 @@ contract CrowdFundingWithDeadLine {
         }
     }
 
-    function currentTime() internal view returns(uint){
+    function fininshCrowdFunding() public inState(State.Ongoing){
+        require(!beforeDeadLine(), "Cannot finish campaign before deadline");
+
+        if(!collected){
+            state = State.Failed;
+        } else {
+            state = State.Succeeded;
+        }
+    }
+
+    function beforeDeadLine() public view returns(bool){
+        return currentTime() < fundingDeadLine;
+    }
+
+    function currentTime() internal view virtual returns(uint){
         return block.timestamp;
     }
 

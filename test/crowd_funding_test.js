@@ -1,4 +1,4 @@
-let CrowdFundingWithDeadLine = artifacts.require("./CrowdFundingWithDeadLine.sol");
+let CrowdFundingWithDeadLine = artifacts.require("./TestCrowdFundingWithDeadLine.sol");
 
 contract('CrowdFundingWithDeadLine', function(accounts) {
     let contract;
@@ -32,6 +32,9 @@ contract('CrowdFundingWithDeadLine', function(accounts) {
         let targetAmount = await contract.targetAmount.call();
         expect(targetAmount.toString()).to.equal(ONE_ETH);
 
+        // let fundingDeadline = await contract.fundingDeadline.call();
+        // expect(fundingDeadline.toNumber()).to.equal(600);
+
         let actualBeneficiary = await contract.beneficiary.call();
         expect(actualBeneficiary).to.equal(beneficiary);
 
@@ -50,5 +53,36 @@ contract('CrowdFundingWithDeadLine', function(accounts) {
 
         let totalCollected = await contract.totalCollected.call();
         expect(totalCollected.toString()).to.equal(ONE_ETH);
+    });
+
+    it('cannot cantribute after deadline', async function() {
+        try{
+            await contract.setCurrentTime(500);
+            await contract.sendTransaction({
+                value: ONE_ETH,
+                from: contractCreator,
+            });
+            expect.fail();
+        }
+        catch (error){
+            expect(error.message).to.equal('DEADLINE_PASSED');
+        }
+    });
+
+    it('crowdfunding success', async function() {
+        await contract.contribute({value: ONE_ETH, from: contractCreator});
+        await contract.setCurrentTime(601);
+        await contract.finishCrowdFunding();
+        let state = await contract.state.call();
+
+        expect(state.valueOf()).to.equal(SUCCESS_STATE);
+    });
+
+    it('crowdfunding failed', async function() {
+        await contract.setCurrentTime(601);
+        await contract.finishCrowdFunding();
+        let state = await contract.state.call();
+
+        expect(state.valueOf()).to.equal(FAILED_STATE);
     });
 });
