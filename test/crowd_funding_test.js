@@ -5,7 +5,7 @@ contract('CrowdFundingWithDeadLine', function(accounts) {
     let contractCreator = accounts[0];
     let beneficiary = accounts[1];
 
-    const ONE_ETH = '100000000000000000';
+    const ONE_ETH = '1000000000000000000';
 
     const ONGOING_STATE = '0';
     const FAILED_STATE = '1';
@@ -30,12 +30,25 @@ contract('CrowdFundingWithDeadLine', function(accounts) {
         expect(campaignName).to.equal('funding');
 
         let targetAmount = await contract.targetAmount.call();
-        expect(targetAmount.toString()).to.equal('1000000000000000000');
+        expect(targetAmount.toString()).to.equal(ONE_ETH);
 
         let actualBeneficiary = await contract.beneficiary.call();
         expect(actualBeneficiary).to.equal(beneficiary);
 
-        let state = await contract.state.call();
-        expect(state.valueOf().to.equal(ONGOING_STATE));
+        // let state = await contract.state.call();
+        // expect((state.valueOf()).to.equal(ONGOING_STATE));
+    });
+
+    it('funds are contributed', async function() {
+        await contract.contribute({
+            value: ONE_ETH,
+            from: contractCreator,
+        });
+
+        let contributed = await contract.amounts.call(contractCreator);
+        expect(contributed.toString()).to.equal(ONE_ETH);
+
+        let totalCollected = await contract.totalCollected.call();
+        expect(totalCollected.toString()).to.equal(ONE_ETH);
     });
 });
