@@ -2,8 +2,12 @@
 
 pragma solidity ^0.8.0;
 
+import "./Utils.sol";
+
 contract CrowdFundingWithDeadLine {
     enum State{ Ongoing, Failed, Succeeded, PaidOut }
+
+    using Utils for *;
 
     event CampaignFinished(
         address addr,
@@ -33,8 +37,8 @@ contract CrowdFundingWithDeadLine {
     )
     {
         name = contractName;
-        targetAmount = targetAmountEth * 1 ether;
-        fundingDeadLine = currentTime() + durationInMin * 1 minutes;
+        targetAmount = Utils.etherToWei(targetAmountEth);
+        fundingDeadLine = currentTime() +  Utils.minutesToSeconds(durationInMin);
         beneficiary = payable(beneficiaryAddress);
         state = State.Ongoing;
     }
